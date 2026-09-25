@@ -7,6 +7,26 @@ scale argument, e.g., `mdi_test.tk 1.5`. It is also possible to pass a theme
 argument, e.g., `mdi_test.tk 1.5 classic` (the order of arguments doesn’t
 matter).
 
+| ![Screenshot1](screenshot1.png) |
+|:--:|
+| *7 Child Windows; arbitrary sizes and positions* |
+
+|![Screenshot2](screenshot2.png)|
+|:--:|
+| *8 Child Windows cascaded* |
+
+|![Screenshot3](screenshot3.png)|
+|:--:|
+| *9 Child Windows tiled* |
+
+|![Screenshot4](screenshot4.png)|
+|:--:|
+| *The child window menu* |
+
+|![Screenshot5](screenshot5.png)|
+|:--:|
+| *The Window menu* |
+
 ## Installing
 
 The module is entirely self-contained. To use `mdi-1.tm` either put it in
