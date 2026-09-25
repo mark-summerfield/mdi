@@ -1,0 +1,235 @@
+#!/usr/bin/env wish9
+# Copyright © 2026 Mark Summerfield. All rights reserved.
+
+if {![catch {file readlink [info script]} name]} {
+    const APPPATH [file dirname $name]
+} else {
+    const APPPATH [file normalize [file dirname [info script]]]
+}
+tcl::tm::path add $APPPATH
+
+package require mdi
+
+const COLORS [split [string trim [readFile $::APPPATH/rgb.txt]] \n]
+
+proc main {} {
+    set debug 0
+    set theme clam
+    foreach arg $::argv {
+        if {[string is double -strict $arg]} {
+            tk scaling $arg
+        } elseif {$arg eq "debug"} {
+            set debug 1
+        } else {
+            set theme $arg
+        }
+    }
+    set app [App new $theme $debug]
+    $app show
+}
+
+oo::singleton create App {
+    variable MdiWin
+    variable Count
+    variable Debug
+}
+
+oo::define App constructor {theme debug} {
+    set Count 0
+    set Debug $debug
+    wm withdraw .
+    option add *tearOff 0
+    ttk::style theme use $theme
+    tk appname "MDI Test"
+    my make_ui
+}
+
+oo::define App method show {} {
+    wm deiconify .
+    raise .
+    update
+    after idle [callback on_startup]
+}
+
+oo::define App method make_ui {} {
+    my prepare_ui
+    my make_widgets
+    my make_layout
+    my make_menu
+    my make_bindings
+}
+
+oo::define App method prepare_ui {} {
+    wm title . [tk appname]
+    wm iconname . [tk appname]
+    wm minsize . 640 480
+    set ::MENU_ICON_SIZE [expr {max(20, round(14 * [tk scaling]))}]
+}
+
+oo::define App method make_widgets {} {
+    ttk::frame .mf    ;# main frame
+    ttk::frame .mf.tb -relief raised ;# toolbar
+    ttk::frame .mf.sf -relief sunken ;# status frame
+    ttk::button .mf.tb.new_text -text "\U0001F5B9" -takefocus 0 \
+            -style Toolbutton -command [callback on_new_text]
+    ttk::button .mf.tb.new_image -text "\U0001F5BB" -takefocus 0 \
+            -style Toolbutton -command [callback on_new_image]
+    ttk::button .mf.tb.cascade -text ⧉ -takefocus 0 \
+            -style Toolbutton -command [callback on_cascade]
+    ttk::button .mf.tb.tile -text ⊞ -takefocus 0 \
+            -style Toolbutton -command [callback on_tile]
+    ttk::button .mf.tb.minimize_all -text "\U0001F5D5" -takefocus 0 \
+            -style Toolbutton -command [callback on_minimize_all]
+    set MdiWin [mdi::Window new .mf.mdi]
+    if {$Debug} {
+        $MdiWin set_background_color #FFFFE0
+        $MdiWin set_active_child_frame_color blue
+        $MdiWin set_inactive_child_frame_color #CDCDFF
+        $MdiWin set_active_child_title_color navy
+        $MdiWin set_inactive_child_title_color pink
+    }
+    ttk::label .mf.sf.label -text Ready
+    ttk::label .mf.sf.count_label -text 0 -relief sunken
+}
+
+oo::define App method make_layout {} {
+    set opts "-padx 3 -pady 3"
+    pack .mf.tb.new_text -side left {*}$opts
+    pack .mf.tb.new_image -side left {*}$opts
+    pack [ttk::frame .mf.tb.pad -width 2 \
+            -height [winfo reqheight .mf.tb.new_image] -relief sunken] \
+            -side left {*}$opts
+    pack .mf.tb.cascade -side left {*}$opts
+    pack .mf.tb.tile -side left {*}$opts
+    pack .mf.tb.minimize_all -side left {*}$opts
+    pack .mf.tb -fill x -side top
+    pack [$MdiWin frame] -fill both -expand 1
+    pack .mf.sf.label -side left -fill x -expand 1 {*}$opts
+    pack .mf.sf.count_label -side right {*}$opts
+    pack .mf.sf -fill x -side bottom
+    pack .mf -fill both -expand 1
+}
+
+oo::define App method make_menu {} {
+    menu .menu
+    . configure -menu .menu
+    menu .menu.file
+    .menu add cascade -menu .menu.file -label File -underline 0
+    .menu.file add command -command [callback on_new_text] \
+            -label "\U0001F5B9 New Text" -underline 6 
+    .menu.file add command -command [callback on_new_image] \
+            -label "\U0001F5BB New Image" -underline 6 
+    .menu.file add command -command [callback on_quit] -label "⏼ Quit" \
+            -underline 2 -accelerator Ctrl+Q
+    $MdiWin new_window_menu .menu
+}
+
+oo::define App method make_bindings {} {
+    bind [$MdiWin frame] <<MdiTileError>> [callback on_tile_error %d]
+    bind . <Control-q> [callback on_quit]
+    wm protocol . WM_DELETE_WINDOW [callback on_quit]
+}
+
+oo::define App method on_startup {} {
+    my on_new_text
+    my on_new_image
+    my on_new_text
+    my on_new_image
+    my on_new_text
+    lassign [$MdiWin size] width height
+    my on_new_text [list [expr {$width - 400}] [expr {$height - 300}] \
+            400 300]
+}
+
+oo::define App method on_new_text {{geometry {}}} {
+    set color [lrandom $::COLORS]
+    set closable [expr {$Count != 7}] ;# just to show a nonclosable eg
+    set child [$MdiWin new_child $color $geometry $closable]
+    bind [$child frame] <<MdiChildClose>> [callback on_text_child_closed %d]
+    set tk_text [text [$child body].txt -font Helvetica -wrap word]
+    $tk_text tag configure color -background $color -underline 1 \
+            -underlinefg $color
+    $tk_text insert end "The randomly chosen color is $color "
+    $tk_text insert end "_____" color
+    $tk_text insert end .
+    pack $tk_text -fill both -expand 1
+    $child on_raise
+    my update_count 1
+}
+
+oo::define App method on_new_image {} {
+    const SIZE 140
+    set color [lrandom $::COLORS]
+    set shape [lrandom {square rectangle circle oval}]
+    set child [$MdiWin new_child "$shape ($color)"]
+    bind [$child frame] <<MdiChildClose>> \
+            [callback on_image_child_closed %d]
+    set canv [canvas [$child body].canv -width $SIZE -height $SIZE]
+    switch $shape {
+        square { $canv create rectangle 10 10 $SIZE $SIZE -fill $color}
+        rectangle {
+            $canv create rectangle 10 10 $SIZE [expr {$SIZE * 0.67}] \
+                    -fill $color
+        }
+        circle { $canv create oval 10 10 $SIZE $SIZE -fill $color}
+        oval {
+            $canv create oval 10 10 $SIZE [expr {$SIZE * 0.75}] -fill $color
+        }
+    }
+    pack $canv -fill both -expand 1
+    $child on_raise
+    my update_count 1
+}
+
+oo::define App method on_cascade {} { $MdiWin cascade }
+
+oo::define App method on_tile {} { $MdiWin tile }
+
+oo::define App method on_minimize_all {} { $MdiWin minimize_all }
+
+oo::define App method on_maximize_child {} { $MdiWin on_maximize_child }
+
+oo::define App method on_minimize_child {} { $MdiWin on_minimize_child }
+
+oo::define App method on_move_mode_child {} { $MdiWin on_move_mode_child }
+
+oo::define App method on_resize_mode_child {} {
+    $MdiWin on_resize_mode_child
+}
+
+oo::define App method on_close_child {} { $MdiWin on_close_child }
+
+oo::define App method on_text_child_closed child {
+    puts "Could save $child: [string trim [[$child body].txt get 1.0 end]]\
+            geometry=[$child geometry]"
+    $child destroy
+    my update_count -1
+}
+
+oo::define App method on_image_child_closed child {
+    $child destroy
+    my update_count -1
+}
+
+oo::define App method on_quit {} {
+    foreach child [$MdiWin children] {
+        # TODO save the $child’s state
+    }
+    $MdiWin destroy
+    exit
+}
+
+oo::define App method on_tile_error message {
+    .mf.sf.label configure -text "$message; cascading instead"
+    $MdiWin cascade
+    after 5000 {.mf.sf.label configure -text Ready}
+}
+
+oo::define App method update_count n {
+    incr Count $n
+    .mf.sf.count_label configure -text $Count
+}
+
+proc lrandom lst { lindex $lst [expr {int(rand() * [llength $lst])}] }
+
+main

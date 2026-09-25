@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDI (Multiple Document Interface) Module</title>
+</head>
+<body>
+
+<h1>MDI (Multiple Document Interface) Module</h1>
+
+<div style="margin: 0.2em; padding: 0.1em; float: right;">
+<img src="mdichild.png" alt="MDI child window" />
+</div>
+
+<p>
+The MDI module <code>mdi-1.tm</code> is a self-contained pure
+Tcl/Tk&nbsp;9 module that provides a class for creating a MDI window
+area and for creating and managing MDI child windows. It has no
+dependencies.
+</p>
+
+<p>
+The End-User Interface is described below, and the programmer’s <a
+href="#api">API</a> below that.
+</p>
+
+<h2 id="user">End-User Interface</h2>
+
+<p>
+Each MDI child window (referred to simply as “window” from now on), has
+a ≣ window menu button, a title, a &#X1F5D6; maximize button, a
+&#X1F5D5; minimize button, and by default a × close button.
+</p>
+
+<p>
+The window mouse actions and their results:
+</p>
+<ul>
+<li><i>Click</i> the ≣ window menu button: Popup the window menu which
+    provides the options: maximize, minimize, restore, move, resize, and
+    by default close.</li>
+<li><i>Click</i> the &#X1F5D6; maximize button:
+    Resize the window to fill the MDI window area <i>(see note
+    below)</i>.</li>
+<li><i>Click</i> the &#X1F5D5; minimize button:
+    Resize the window to just show its buttons and some of its
+    title and move it to the bottom of the MDI area.</li>
+<li><i>Click</i> the × close button: Close the window.</li>
+<li><i>Click</i> the title or top frame: Raise the window to the top.</li>
+<li><i>Shift+Click</i> the title or top frame:
+    Lower the window to the bottom.</li>
+<li><i>Click+Drag</i> the title or top frame: Move the window.</li>
+<li><i>Click+Drag</i> the outer frame: Resize the window.</li>
+<li><i>Double-Click</i> the title: Restore the window if minimized.</li>
+</ul>
+
+<p>
+If the Move menu option is chosen, the window enters <i>move mode</i>
+and may be moved by using the arrow keys. Similarly if the Resize menu
+option is chosen, the window enters <i>resize mode</i> and may be
+resized by using the arrow keys. The most common way to move a window is
+to click the title bar and drag it to the desired position. Similarly
+the most common way to resize a window is to click the frame and drag it
+to the required size.
+</p>
+
+<p>
+If a window is maximized it will fill the entire MDI area—unless there
+are one or more minimized windows in which case it will fill as much of
+the MDI area as possible without covering the minimized windows.
+</p>
+
+<p>
+Applications using MDI windows would normally provide a <i>Window</i>
+menu (and possibly a corresponding toolbar). This menu would typically
+provide the options: <i>Cascade</i>, <i>Tile</i>, <i>Minimize All</i>
+(or Iconize All), and a <i>Windows</i> submenu listing all the unclosed
+unhidden windows. Additional options some or all of which might be
+provided would apply to the “active” window: <i>Maximize</i>,
+<i>Minimize</i>, <i>Restore</i>, <i>Move</i>, <i>Resize</i>,
+<i>Close</i>. Naturally the API below supports all of these. The
+<code>mdi_test.tk</code> example shows most of this in action.
+<p>
+
+<h2 id="api">API</h2>
+
+<p>
+The <code>mdi</code> module (and namespace of the same name) provides
+one public function; the <a href="#new"><code>mdi::Window</code>
+new</a> constructor. The returned <code>mdi::Window</code> object provides
+methods for making new child windows (of type <code>mdi::child</code>). It
+also provides methods for operating on its list of child windows, for
+example, cascading and tiling them. And <code>mdi::child</code> windows
+themselves provide various methods.
+</p>
+
+<p>
+The following virtual events may be generated:
+</p>
+
+<ul>
+<li><code>&lt;&lt;MdiChildClose&gt;&gt;</code> — this event is generated
+when a child window is closed; bind to it for each new child to be able
+to save state before destroying; see <a
+href="#new_child"><code>mdi::Window</code> new_child</a> for an
+example.</li>
+<li><code>&lt;&lt;MdiTileError&gt;&gt;</code> — this event is generated
+if there isn’t enough room to tile all the windows even at their minimum
+sizes or if there are too many windows to tile at all (currently 37 or
+more).</li>
+<li><code>&lt;&lt;MdiChildHide&gt;&gt;</code> — this event is generated
+when a child window is hidden; rarely used.</li>
+<li><code>&lt;&lt;MdiChildUnhide&gt;&gt;</code> — this event is
+generated when a hidden child window is shown; rarely used.</li>
+</ul>
+
+<p>
+Note that most of the methods and the most important events (the first
+two) are all illustrated in the <code>mdi_test.tk</code> example.
+</p>
+
+<p>
+Only the methods listed here are “public”; no other methods should be
+used.
+</p>
+
+<h3 id="new"><code>mdi::Window new <i>name</i></code></h3>
+
+<p>
+The <code><i>name</i></code> is the name of the window (a
+<code>ttk::frame</code>) to create. For example, if the application’s
+main window is <code>.mainwindow</code>, the <code><i>name</i></code>
+might be <code>.mainwindow.mdi</code>.
+</p>
+
+<p>
+For the <code>mdi::Window</code> methods shown below we will assume that
+the <code>mdi::Window</code> object is held in a variable called
+<code>$MdiWin</code>.
+</p>
+
+<h4><code>$MdiWin destroy</code></h4>
+
+<p>
+This method closes and destroy all the <code>mdi::Window</code>’s
+<code>mdi::child</code> windows.
+</p>
+
+<p>
+If the <code>mdi::child</code> windows have state that needs to be saved
+they should be iterated over (e.g., using <a
+href="#children"><code>$MdiWin children</code></a>)
+and their data saved before calling <code>$MdiWin destroy</code>. For
+example:
+</p>
+
+<pre><code>
+foreach child [$MdiWin children] {
+    # retrieve and save the $child’s state
+}
+$MdiWin destroy
+</code></pre>
+
+<h4><code>$MdiWin frame</code></h4>
+
+<p>
+This method returns the <code>mdi::Window</code>’s
+<code>ttk::frame</code>. It is needed to provide the frame which may
+then be packed or gridded inside the main window.
+</p>
+
+<h4 id="children"><code>$MdiWin children</code></h4>
+
+<p>
+This method returns a <code>list</code> of all the
+<code>mdi::Window</code>’s unclosed unhidden <code>mdi::child</code>
+windows.
+</p>
+
+<h4><code>$MdiWin hidden_children</code></h4>
+
+<p>
+This method returns a <code>list</code> of all the
+<code>mdi::Window</code>’s hidden <code>mdi::child</code> windows. This
+method is provided so that if <code>mdi::child</code> windows are hidden
+and their state needs to be saved, they can be iterated over. Normally
+<code>mdi::child</code> windows are never hidden, only minimized or
+closed so this method is rarely used.
+</p>
+
+<h4><code>$MdiWin size</code></h4>
+
+<p>
+This method returns a two-element list of the <code>mdi::Window</code>’s
+(frame’s) <i>width</i> and <i>height</i>.
+</p>
+
+<h4>
+<code>$MdiWin set_background_color <i>color</i></code><br />
+<code>$MdiWin set_active_child_frame_color <i>color</i></code><br />
+<code>$MdiWin set_inactive_child_frame_color <i>color</i></code><br />
+<code>$MdiWin set_active_child_title_color <i>color</i></code><br />
+<code>$MdiWin set_inactive_child_title_color <i>color</i></code>
+</h4>
+
+<p>
+These methods can be used to override the default colors used by the
+<code>mdi::Window</code> and its <code>mdi::child</code> windows. The
+<code><i>color</i></code> is a standard Tcl/Tk color name or hex value
+(e.g., <code>red</code> or <code>#FF0000</code>).
+</p>
+
+<h4 id="new_child"><code>$MdiWin new_child {<i>title</i> ""}
+{<i>geometry</i> {}} {<i>closable</i> 1}</code></h4>
+
+<p>
+Use this method to create new <code>mdi::child</code> windows. If no
+<code><i>title</i></code> is given an auto-generated one is used (e.g.,
+“Window #3”). If no <code><i>geometry</i></code> is given the window is
+given a default position and size. By default <code>mdi::child</code>
+windows are closable; this may be overridden by passing <code>0</code>
+(false) as the third argument.
+</p>
+
+<p>
+Child windows that are closable may be closed by the user clicking their
+× close button or programmatically by calling the <code>mdi::child
+on_close_if_closable</code> method. When a <code>mdi::child</code> is
+closed it generates a <code>&lt;&lt;MdiChildClose&gt;&gt;</code> event.
+A closed window is <i>not</i> destroyed. If a <code>mdi::child</code>
+window has state that needs to be saved, bind to the close event, save
+the child’s state, and then destroy the window. For example:
+</p>
+
+<pre><code>
+set child [$MdiWin new_child $title]
+bind [$child frame] &lt;&lt;MdiChildClose&gt;&gt; [callback on_child_closed %d]
+…
+oo::define App method on_child_closed child {
+    lassign [$child geometry] x y width height
+    set title [$child title]
+    # Save state here, e.g., geometry, title, etc.
+    $child destroy
+}
+</code></pre>
+
+<p>
+</p>
+
+<h4><code>$MdiWin minimize_all</code></h4>
+
+<p>
+This method minimizes (iconizes) all the <code>mdi::child</code>
+windows. Applications might bind this method to a window toolbar button
+or to a <i>Window</i> menu option. <i>See the <a
+href="#new_window_menu">mdi::Window new_window_menu</a> method.</i>
+</p>
+
+<h4><code>$MdiWin cascade</code></h4>
+
+<p>
+This method cascades all the <code>mdi::child</code> windows (including
+any that were minimized). Applications might bind this method to a
+window toolbar button or to a <i>Window</i> menu option. <i>See the <a
+href="#new_window_menu">mdi::Window new_window_menu</a> method.</i>
+</p>
+
+<h4><code>$MdiWin tile</code></h4>
+
+<p>
+This method tiles all the <code>mdi::child</code> windows (including
+any that were minimized). Applications might bind this method to a
+window toolbar button or to a <i>Window</i> menu option. <i>See the <a
+href="#new_window_menu">mdi::Window new_window_menu</a> method.</i>
+</p>
+
+<p>
+If there is only one <code>mdi::child</code> window this method will
+simply maximize that window.
+</p>
+
+<p>
+Note that tiling is not always possible in which case no action is taken
+beyond a <code>&lt;&lt;MdiTileError&gt;&gt;</code> event being
+generated. For example, if there is insufficient space in the
+<code>mdi::Window</code> to tile every <code>mdi::child</code> window
+even at their minimum sizes, tiling cannot be done. Also, if there are
+too many <code>mdi::child</code> windows (currently 37 or more), then
+tiling will not be done.
+</p>
+
+<p>
+One way of handling too many child windows is to bind to the
+<code>&lt;&lt;MdiTileError&gt;&gt;</code> event and cascade. For
+example:
+</p>
+
+<pre><code>
+bind [$MdiWin frame] &lt;&lt;MdiTileError&gt;&gt; [callback on_tile_error]
+…
+oo::define App method on_tile_error {} { $MdiWin cascade }
+</code></pre>
+
+<h4><code>$MdiWin active_child</code></h4>
+
+<p>
+This method returns the <code>mdi::child</code> window that has the
+focus (or that last had the focus if none currently have it). It will
+return the empty string if there isn’t one.
+</p>
+
+<p>
+Applications normally use this method in callbacks that respond to
+toolbar buttons or <i>Window</i> menu options that are concerned with
+individual <code>mdi::child</code> windows. For example:
+</p>
+
+<pre><code>
+oo::define App method on_maximize_child {} {
+    if {[set child [$MdiWin active_child]] ne ""} { $child on_maximize }
+}
+</code></pre>
+
+<i>See the <a href="#new_window_menu">mdi::Window new_window_menu</a>
+method.</i>
+
+<h4><code>$MdiWin make_child_visible <i>child</i></code></h4>
+
+<p>
+This method makes the given <code><i>child</i></code> window visible. If
+the window is within the <code>mdi::Window</code>’s area it is raised
+and given focus; if it is outside the area (so not physically visible),
+it is moved to the center of the area and then raised and given focus.
+Applications normally have a <i>Window</i> menu submenu, <i>Windows</i>,
+each of whose options is the title of a <code>mdi::child</code> window.
+Each of these options is normally bound to the
+<code>make_child_visible</code> method.
+<i>See the <a href="#new_window_menu">mdi::Window new_window_menu</a>
+method.</i>
+</p>
+
+<h4>
+<code>$MdiWin on_maximize_child</code><br />
+<code>$MdiWin on_minimize_child</code><br />
+<code>$MdiWin on_restore_child</code><br />
+<code>$MdiWin on_move_mode_child</code><br />
+<code>$MdiWin on_resize_mode_child</code><br />
+<code>$MdiWin on_close_child</code>
+</h4>
+
+<p>
+These methods may be bound to a <i>Window</i> menu or toolbar to
+provide options for controlling a window. <i>See the <a
+href="#new_window_menu">mdi::Window new_window_menu</a> method.</i>
+</p>
+
+<h4 id="new_window_menu"><code>$MdiWin new_window_menu
+<i>window_menu</i> {<i>options</i> {<i>cascade tile minimize_all maximize
+minimize restore move resize close windows</i>}}</code></h4>
+
+<p>
+The <code><i>window_menu</i></code> is the menu to populate; for
+example:
+</p>
+
+<pre></code>
+    menu .menu
+    . configure -menu .menu
+    menu .menu.file
+    .menu add cascade -menu .menu.file -label File -underline 0
+    # Other File menu options…
+    .menu.file add command -command [callback on_quit] -label Quit \
+        -underline 0 -accelerator Ctrl+Q -compound left
+    # Any other menus that precede the Window menu…
+    $MdiWin new_window_menu .menu ;# creates a .menu._windows menu
+    menu .menu.help
+    .menu add cascade -menu .menu.help -label Help -underline 0
+</code></pre>
+
+<p>
+By default the <i>Window</i> menu will provide options for
+<i>Cascade</i>, <i>Tile</i>, and <i>Minimize All</i>, which apply to all
+the child windows; <i>Maximize</i>, <i>Minimize</i>, <i>Restore</i>,
+<i>Move</i>, <i>Resize</i>, and <i>Close</i> (which will only close
+closable windows), which apply to the “active” window; and
+<i>Windows</i> (a submenu of the unclosed unhidden windows). 
+</p>
+
+<p>
+If you don’t want all these options, simply pass your own
+<code><i>options</i></code> list containing only those options you
+require.
+</p>
+
+<p>
+All the window menu options are bound to the appropriate methods so
+they all work as-is.
+</p>
+
+<h3><code>mdi::child</code> methods</h3>
+
+<p>
+The <code>mdi::child</code> constructor should <i>not</i> be used;
+always call <a href="#new_child"><code>mdi::Window new_child</code></a>
+to create new <code>mdi::child</code> windows.
+</p>
+
+<p>
+For the <code>mdi::child</code> window methods shown below we will
+assume that the <code>mdi::child</code> object is held in a variable
+called <code>$child</code>.
+</p>
+
+<h4><code>$child destroy</code></h4>
+
+<p>
+This method calls the <code>mdi::child</code>’s destructor which removes
+the window from the parent <code>mdi::Window</code>’s list of children
+and then destroys the <code>mdi::child</code> window’s
+<code>ttk::frame</code>. <i>See <a
+href="#new_child"><code>mdi::Window</code> new_child</a> for an example
+of use.</i>
+</p>
+
+<h4><code>$child frame</code></h4>
+
+<p>
+This method returns the <code>mdi::child</code>’s
+<code>ttk::frame</code>. The only use that should be made of this method
+is to bind to its <code>&lt;&lt;MdiChildClose&gt;&gt;</code> event
+<i>(see below)</i>.
+</p>
+
+<h4><code>$child body</code></h4>
+This method returns the <code>mdi::child</code>’s “body”
+<code>ttk::frame</code>. Use this to populate the child window with your
+own widgets. For example:
+</p>
+
+<pre><code>
+set child [$MdiWin new_child $title $geometry $closable]
+bind [$child frame] &lt;&lt;MdiChildClose&gt;&gt; [callback on_child_closed %d]
+set tk_text [text [$child body].txt -font Helvetica -wrap word]
+pack $tk_text -fill both -expand 1
+</code></pre>
+
+<p>
+Here, a new <code>mdi::child</code> window is created, its
+<code>&lt;&lt;MdiChildClose&gt;&gt;</code> event is bound so that we can
+save its state when it is closed (see the <a
+href="#new_child">mdi::Window new_child</a> method), and we populate its
+body with a <code>text</code> widget. Naturally, we could populate the
+body with any number of widgets including scrollbars etc.
+</p>
+
+<h4>
+<code>$child title</code><br />
+<code>$child set_title <i>title</i></code>
+</h4>
+
+<p>
+The <code>title</code> method returns the <code>mdi::child</code>
+window’s title and the <code>set_title</code> method sets the title to
+<code><i>title</i></code>.
+</p>
+
+<h4>
+<code>$child is_closed</code><br />
+<code>$child is_closable</code><br />
+<code>$child is_hidden</code><br />
+<code>$child is_visible</code><br />
+<code>$child is_minimized</code>
+</h4>
+
+<p>
+These methods return either <code>1</code> (true) or <code>0</code>
+(false) regarding the <code>mdi::child</code> window’s state. The
+<code>is_visible</code> method returns <code>1</code> (true) if the
+window is closed <i>or</i> hidden; but if it is neither it returns
+<code>0</code> (false).
+</p>
+
+<h4>
+<code>$child on_maximize</code><br />
+<code>$child on_minimize</code><br />
+<code>$child on_restore</code><br />
+<code>$child on_move_mode</code><br />
+<code>$child on_resize_mode</code><br />
+</h4>
+
+<p>
+Applications might bind these methods to a window toolbar button or to a
+<i>Window</i> menu option. <i>See the <a
+href="#new_window_menu">mdi::Window new_window_menu</a> method.</i>
+If binding, here is an example of a callback to be bound to:
+</p>
+
+<pre><code>
+oo::define App method on_maximize_child {} {
+    if {[set child [$MdiWin active_child]] ne ""} { $child on_maximize }
+}
+</code></pre>
+
+<p>
+For moving and resizing invoking the <code>on_move_mode</code> or
+<code>on_resize_mode</code> methods means that the user can move or
+resize by pressing the arrow keys and finish by pressing the
+<i>Escape</i> key.
+</p>
+
+<h4>
+<code>$child on_close</code><br />
+<code>$child on_close_if_closable</code>
+</h4>
+
+<p>
+These methods are used to programmatically close a window. Typically
+<code>on_close_if_closable</code> will be bound to a <i>Window</i> menu
+option as it is when the <a href="#new_window_menu">mdi::Window
+new_window_menu</a> method is used.
+</p>
+
+<p>
+When either method is called—whether via a programmer’s own binding or
+due to the user clicking a window’s × close button or clicking a
+window’s ≣ window menu button and then clicking the <i>Close</i> option;
+and in the case of calling <code>on_close_if_closable</code> providing
+the window is closable—it hides the window and generates a
+<code>&lt;&lt;MdiChildClose&gt;&gt;</code> event. <i>(See the <a
+href="#new_child"><code>mdi::Window new_child</code> method</a> for an
+example of binding to this event and saving a window’s state before
+destroying it.)</i>
+</p>
+
+<p>
+Use <code>on_close</code> to close a window which is not closable (i.e.,
+not user-closable). In all other cases it is best to use
+<code>on_close_if_closable</code>.
+</p>
+
+<h4>
+<code>$child min_size</code><br />
+<code>$child size</code><br />
+<code>$child geometry</code>
+</h4>
+
+<p>
+The “size” methods return a two-element list of <i>width</i> and
+<i>height</i>; the <code>geometry</code> method returns a four-element
+list of <i>x</i>, <i>y</i>, <i>width</i>, and <i>height</i>.
+</p>
+
+<h4><code>$child on_hide</code></h4>
+
+<p>
+This method can be used to hide a <code>mdi::child</code> window. It
+should be used programmatically and normally not offered to the end-user
+as an option. This method is provided for completeness but is not
+recommended for normal use cases.
+</p>
+
+<h4><code>$child on_show</code></h4>
+
+<p>
+This method can be used to show a hidden <code>mdi::child</code>
+window. It should be used programmatically and normally not offered to
+the end-user as an option. This method is provided for completeness but
+is not recommended for normal use cases.
+</p>
+
+<hr>
+</body>
+</html>
