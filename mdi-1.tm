@@ -315,7 +315,7 @@ oo::define mdi::Window method new_window_menu {parent_menu \
     set n 0
     set Menu $parent_menu._window
     menu $Menu
-    .menu add cascade -menu $Menu -label Window -underline 0
+    $parent_menu add cascade -menu $Menu -label Window -underline 0
     if {"cascade" in $options} {
         $Menu add command -label "⧉ Cascade" -underline 2 \
                 -command [callback cascade]
