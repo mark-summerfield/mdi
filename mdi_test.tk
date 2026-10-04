@@ -20,6 +20,7 @@ proc main {} {
             tk scaling $arg
         } elseif {$arg eq "debug"} {
             set debug 1
+            puts [ttk::style theme names]
         } else {
             set theme $arg
         }
