@@ -14,7 +14,7 @@ const COLORS [split [string trim [readFile $::APPPATH/rgb.txt]] \n]
 
 proc main {} {
     set debug 0
-    set theme clam
+    set theme [lrandom [ttk::style theme names]]
     foreach arg $::argv {
         if {[string is double -strict $arg]} {
             tk scaling $arg
@@ -41,7 +41,7 @@ oo::define App constructor {theme debug} {
     wm withdraw .
     option add *tearOff 0
     ttk::style theme use $theme
-    tk appname "MDI Test"
+    tk appname "MDI Test ($theme)"
     my make_ui
 }
 
