@@ -32,11 +32,13 @@ proc main {} {
 oo::singleton create App {
     variable MdiWin
     variable Count
+    variable Id
     variable Debug
 }
 
 oo::define App constructor {theme debug} {
     set Count 0
+    set Id 1
     set Debug $debug
     wm withdraw .
     option add *tearOff 0
@@ -132,20 +134,29 @@ oo::define App method make_bindings {} {
 }
 
 oo::define App method on_startup {} {
-    my on_new_text t1
-    my on_new_image i1
-    my on_new_text t2
-    my on_new_image i2
-    my on_new_text t3
+    my on_new_text
+    my on_new_image
+    my on_new_text
+    my on_new_image
+    my on_new_text
     lassign [$MdiWin size] width height
-    my on_new_text t4 [list [expr {$width - 400}] [expr {$height - 300}] \
+    my on_new_text [list [expr {$width - 400}] [expr {$height - 300}] \
             400 300]
 }
 
-oo::define App method on_new_text {{userdata {}} {geometry {}}} {
+oo::define App method on_new_text {{geometry {}}} {
+    set userdata TXT#[incr Id]
     set color [lrandom $::COLORS]
-    set closable [expr {$Count != 7}] ;# just to show a nonclosable eg
-    set child [$MdiWin new_child $color $userdata $geometry $closable]
+    set decorations {} ;# below: just to show variety
+    switch $Count {
+         5 { set decorations {minimize maximize close} }
+         7 { set decorations {maximize minimize} }
+         9 { set decorations {minimize} }
+        11 { set decorations {maximize} }
+        13 { set decorations {close} }
+        15 { set decorations {minimize close} }
+    }
+    set child [$MdiWin new_child $color $userdata $geometry $decorations]
     bind [$child frame] <<MdiChildClose>> [callback on_text_child_closed %d]
     set tk_text [text [$child body].txt -font Helvetica -wrap word]
     $tk_text tag configure color -background $color -underline 1 \
@@ -158,7 +169,8 @@ oo::define App method on_new_text {{userdata {}} {geometry {}}} {
     my update_count 1
 }
 
-oo::define App method on_new_image userdata {
+oo::define App method on_new_image {} {
+    set userdata IMG#[incr Id]
     const SIZE 140
     set color [lrandom $::COLORS]
     set shape [lrandom {square rectangle circle oval}]

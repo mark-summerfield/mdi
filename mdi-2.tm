@@ -271,14 +271,14 @@ oo::define mdi::Window method make_child_visible child {
 }
 
 oo::define mdi::Window method new_child {{title ""} {userdata {}} \
-        {geometry {}} {closable 1}} {
+        {geometry {}} {decorations {}}} {
     classvariable C
     classvariable Column
     classvariable X
     classvariable Y
     set win_height [winfo height $Frame]
     set name $Frame.child[incr C]
-    set child [mdi::child new [self] $name $userdata $closable]
+    set child [mdi::child new [self] $name $userdata $decorations]
     lappend Children $child
     if {$geometry eq {}} {
         set width [expr {140 * [tk scaling]}] 
@@ -427,7 +427,7 @@ oo::class create mdi::child {
     variable Frame
     variable X
     variable Y
-    variable Closable
+    variable Decorations
     variable Moving
     variable Resizing
     variable Mode ;# -2 → hidden|-1 → closed|0 → normal|1 → move|2 → resize
@@ -439,14 +439,17 @@ oo::class create mdi::child {
 
 # parent: the mdi::Window to which this belongs
 # name: the name of the window, e.g., .mainframe.mdiwindow
-# closeable: whether there should be a close button or not
-oo::define mdi::child constructor {parent name {userdata {}} {closable 1}} {
+# decorations: minimize and/or maximize and/or close buttons; if close
+#   button is present the window is closable
+oo::define mdi::child constructor {parent name {userdata {}} \
+        {decorations {}}} {
     set Parent $parent
     set Frame $name
     set X 0
     set Y 0
     set UserData $userdata
-    set Closable $closable
+    if {$decorations eq {}} { set decorations {maximize minimize close} }
+    set Decorations $decorations
     set Moving 0
     set Resizing 0
     set Mode 0
@@ -470,11 +473,15 @@ oo::define mdi::child method MakeWidgets {} {
     ttk::button $Frame.top.menu -style Toolbutton -text ≣ \
             -command [callback on_menu]
     ttk::label $Frame.top.label
-    ttk::button $Frame.top.maximize -style Toolbutton -text "\U0001F5D6" \
-            -command [callback on_maximize]
-    ttk::button $Frame.top.minimize -style Toolbutton -text "\U0001F5D5" \
-            -command [callback on_minimize]
-    if {$Closable} {
+    if {"maximize" in $Decorations} {
+        ttk::button $Frame.top.maximize -style Toolbutton \
+                -text "\U0001F5D6" -command [callback on_maximize]
+    }
+    if {"minimize" in $Decorations} {
+        ttk::button $Frame.top.minimize -style Toolbutton \
+                -text "\U0001F5D5" -command [callback on_minimize]
+    }
+    if {"close" in $Decorations} {
         ttk::button $Frame.top.close -style Toolbutton -text × \
                 -command [callback on_close]
     }
@@ -487,17 +494,20 @@ oo::define mdi::child method MakeLayout {} {
     set width [winfo reqwidth $Frame.top.menu]
     grid $Frame.top.menu -row 0 -column 0 -sticky w {*}$opts
     grid $Frame.top.label -row 0 -column 1 -sticky w {*}$opts
-    grid $Frame.top.maximize -row 0 -column 2 -sticky e {*}$opts
-    grid $Frame.top.minimize -row 0 -column 3 -sticky e {*}$opts
-    set columns 3
-    if {$Closable} {
-        grid $Frame.top.close -row 0 -column 4 -sticky e {*}$opts
-        incr columns
-    }
-    foreach column [lseq $columns] {
-        if {$column != 1} {
-            grid columnconfigure $Frame.top $column -minsize $width
+    set column 2
+    foreach decoration $Decorations {
+        if {$decoration eq "maximize"} {
+            grid $Frame.top.maximize -row 0 -column $column \
+                    -sticky e {*}$opts
+        } elseif {$decoration eq "minimize"} {
+            grid $Frame.top.minimize -row 0 -column $column \
+                    -sticky e {*}$opts
+        } elseif {$decoration eq "close"} {
+            grid $Frame.top.close -row 0 -column $column \
+                    -sticky e {*}$opts
         }
+        grid columnconfigure $Frame.top $column -minsize $width
+        incr column
     }
     grid columnconfigure $Frame.top 1 -weight 1
     pack $Frame.body -fill both -expand 1 {*}$opts
@@ -517,7 +527,7 @@ oo::define mdi::child method MakeMenu {} {
             -label "↔ Move" -underline 2
     $Menu add command -command [callback on_resize_mode] \
             -label "⇲ Resize" -underline 6
-    if {$Closable} {
+    if {[my is_closable]} {
         $Menu add separator
         $Menu add command -command [callback on_close] -label "× Close" \
                 -underline 2
@@ -558,7 +568,8 @@ oo::define mdi::child method set_title title {
 }
 
 oo::define mdi::child method is_closed {} { expr {$Mode == -1} }
-oo::define mdi::child method is_closable {} { return $Closable }
+oo::define mdi::child method is_closable {} {
+        expr {"close" in $Decorations } }
 oo::define mdi::child method is_hidden {} { expr {$Mode == -2} }
 oo::define mdi::child method is_visible {} { expr {$Mode >= 0} }
 oo::define mdi::child method is_minimized {} { return $Minimized }
@@ -694,7 +705,7 @@ oo::define mdi::child method on_down_arrow {} {
 }
 
 oo::define mdi::child method on_close_if_closable {} {
-    if {$Closable} { my on_close }
+    if {my is_closable} { my on_close }
 }
 
 oo::define mdi::child method on_close {} {

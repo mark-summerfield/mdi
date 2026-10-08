@@ -21,6 +21,14 @@ dependencies.
 </p>
 
 <p>
+Version 2 has a different (and incompatible) signature for the <a
+href="#new_child"><code>mdi::Window</code> new_child</a> method. This
+method now supports passing user data and specifying which window
+decorations (maximize, minimize, close) should be shown and in what
+order.
+</p>
+
+<p>
 The End-User Interface is described below, and the programmer’s <a
 href="#api">API</a> below that.
 </p>
@@ -212,7 +220,8 @@ These methods can be used to override the default colors used by the
 </p>
 
 <h4 id="new_child"><code>$MdiWin new_child {<i>title</i> ""}
-{<i>userdata</i> {}} {<i>geometry</i> {}} {<i>closable</i> 1}</code></h4>
+{<i>userdata</i> {}} {<i>geometry</i> {}} {<i>decorations</i>
+{}}</code></h4>
 
 <p>
 Use this method to create new <code>mdi::child</code> windows. If no
@@ -220,9 +229,16 @@ Use this method to create new <code>mdi::child</code> windows. If no
 “Window #3”). The <code><i>userdata</i></code> is to help with
 saving/restoring windows between sessions. If no
 <code><i>geometry</i></code> is given the window is given a default
-position and size. By default <code>mdi::child</code> windows are
-closable; this may be overridden by passing <code>0</code> (false) as
-the third argument.
+position and size.
+</p>
+
+<p>
+The <code><i>decorations</i></code> argument’s default of
+<code>{}</code> means that the window will have &#X1F5D6; maximize,
+&#X1F5D5; minimize, and × close buttons (in that order). To change the
+order of all three or to have only one or two in the given order pass a
+list containing one or more of the words <code>"maximize"</code>
+<code>"minimize"</code> <code>"close"</code> in the required order.
 </p>
 
 <p>
