@@ -14,7 +14,7 @@
 </div>
 
 <p>
-The MDI module <code>mdi-1.tm</code> is a self-contained pure
+The MDI module <code>mdi-2.tm</code> is a self-contained pure
 Tcl/Tk&nbsp;9 module that provides a class for creating a MDI window
 area and for creating and managing MDI child windows. It has no
 dependencies.
@@ -212,15 +212,17 @@ These methods can be used to override the default colors used by the
 </p>
 
 <h4 id="new_child"><code>$MdiWin new_child {<i>title</i> ""}
-{<i>geometry</i> {}} {<i>closable</i> 1}</code></h4>
+{<i>userdata</i> {}} {<i>geometry</i> {}} {<i>closable</i> 1}</code></h4>
 
 <p>
 Use this method to create new <code>mdi::child</code> windows. If no
 <code><i>title</i></code> is given an auto-generated one is used (e.g.,
-“Window #3”). If no <code><i>geometry</i></code> is given the window is
-given a default position and size. By default <code>mdi::child</code>
-windows are closable; this may be overridden by passing <code>0</code>
-(false) as the third argument.
+“Window #3”). The <code><i>userdata</i></code> is to help with
+saving/restoring windows between sessions. If no
+<code><i>geometry</i></code> is given the window is given a default
+position and size. By default <code>mdi::child</code> windows are
+closable; this may be overridden by passing <code>0</code> (false) as
+the third argument.
 </p>
 
 <p>
@@ -463,6 +465,19 @@ body with any number of widgets including scrollbars etc.
 The <code>title</code> method returns the <code>mdi::child</code>
 window’s title and the <code>set_title</code> method sets the title to
 <code><i>title</i></code>.
+</p>
+
+<h4>
+<code>$child userdata</code><br />
+<code>$child set_userdata <i>userdata</i></code>
+</h4>
+
+<p>
+The <code>userdata</code> method returns the <code>mdi::child</code>
+window’s userdata and the <code>set_userdata</code> method sets the
+userdata to <code><i>userdata</i></code>. The
+<code><i>userdata</i></code> is not used by the module itself; it is
+provided purely to help with saving/restoring windows between sessions.
 </p>
 
 <h4>

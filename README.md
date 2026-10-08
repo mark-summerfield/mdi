@@ -27,9 +27,12 @@ matter).
 |:--:|
 | *The Window menu* |
 
+Note: I use [Store](https://github.com/mark-summerfield/store) for version
+control so github is only used to make the code public.
+
 ## Installing
 
-The module is entirely self-contained. To use `mdi-1.tm` either put it in
+The module is entirely self-contained. To use `mdi-2.tm` either put it in
 one of your package paths or copy it into your application’s folder.
 
 ## Documentation
