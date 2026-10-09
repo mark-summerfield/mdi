@@ -709,7 +709,7 @@ oo::define mdi::child method on_down_arrow {} {
 }
 
 oo::define mdi::child method on_close_if_closable {} {
-    if {my is_closable} { my on_close }
+    if {[my is_closable]} { my on_close }
 }
 
 oo::define mdi::child method on_close {} {
