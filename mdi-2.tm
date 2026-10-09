@@ -15,7 +15,7 @@ namespace eval mdi {
     variable TitleInactiveTextColor grey
 }
 
-proc mdi::initialize {} {
+proc mdi::Initialize {} {
     ttk::style configure Mdi.TFrame -background #F0F0F0 -relief sunken
     ttk::style configure MdiActive.TFrame -background #B0B0B0 -relief sunken
     ttk::style configure MdiInactive.TFrame -relief sunken \
@@ -37,7 +37,7 @@ oo::define mdi::Window initialize {
 }
 
 oo::define mdi::Window constructor name {
-    if {!$::mdi::Initialized} { mdi::initialize }
+    if {!$::mdi::Initialized} { mdi::Initialize }
     set Frame [ttk::frame $name -style Mdi.TFrame]
     set Children [list]
     set Menu ""
@@ -146,7 +146,7 @@ oo::define mdi::Window method tile {} {
         set width [winfo width $Frame]
         set height [winfo height $Frame]
         set wide [expr {$width > $height}]
-        my tile_many $width $height $min_width $min_height $wide $children \
+        my TileMany $width $height $min_width $min_height $wide $children \
                 $size
         $active on_raise
     } else {
@@ -155,9 +155,9 @@ oo::define mdi::Window method tile {} {
     }
 }
 
-oo::define mdi::Window method tile_many {width height min_width min_height \
+oo::define mdi::Window method TileMany {width height min_width min_height \
         wide children size} {
-    lassign [my tile_get_rows_columns $wide $size] rows columns
+    lassign [my TileGetRowsColumns $wide $size] rows columns
     set cwidth [expr {int(floor($width / ($columns * 1.0)))}]
     set cheight [expr {int(floor($height / ($rows * 1.0)))}]
     if {$cwidth < $min_width || $cheight < $min_height} {
@@ -176,7 +176,7 @@ oo::define mdi::Window method tile_many {width height min_width min_height \
     }
 }
 
-oo::define mdi::Window method tile_get_rows_columns {wide size} {
+oo::define mdi::Window method TileGetRowsColumns {wide size} {
     switch $size {
        4 - 7 - 8 - 9 - 13 - 14 - 15 - 16 - 21 - 22 - 23 - 24 - 25 - \
            31 - 32 - 33 - 34 - 35 - 36 {
@@ -378,6 +378,8 @@ oo::define mdi::Window method new_window_menu {parent_menu \
     }
 }
 
+# This method is for internal use but is “public” because mdi::child
+# methods need to call it.
 oo::define mdi::Window method repopulate_window_menu {} {
     if {$Menu eq ""} return
     $Menu.windows delete 0 end
