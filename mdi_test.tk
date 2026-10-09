@@ -30,7 +30,7 @@ proc main {} {
 }
 
 oo::singleton create App {
-    variable MdiWin
+    variable MdiArea
     variable Count
     variable Id
     variable Debug
@@ -83,13 +83,13 @@ oo::define App method make_widgets {} {
             -style Toolbutton -command [callback on_tile]
     ttk::button .mf.tb.minimize_all -text "\U0001F5D5" -takefocus 0 \
             -style Toolbutton -command [callback on_minimize_all]
-    set MdiWin [mdi::Window new .mf.mdi]
+    set MdiArea [mdi::Window new .mf.mdi]
     if {$Debug} {
-        $MdiWin set_background_color #FFFFE0
-        $MdiWin set_active_child_frame_color blue
-        $MdiWin set_inactive_child_frame_color #CDCDFF
-        $MdiWin set_active_child_title_color navy
-        $MdiWin set_inactive_child_title_color pink
+        $MdiArea set_background_color #FFFFE0
+        $MdiArea set_active_child_frame_color blue
+        $MdiArea set_inactive_child_frame_color #CDCDFF
+        $MdiArea set_active_child_title_color navy
+        $MdiArea set_inactive_child_title_color pink
     }
     ttk::label .mf.sf.label -text Ready
     ttk::label .mf.sf.count_label -text 0 -relief sunken
@@ -106,7 +106,7 @@ oo::define App method make_layout {} {
     pack .mf.tb.tile -side left {*}$opts
     pack .mf.tb.minimize_all -side left {*}$opts
     pack .mf.tb -fill x -side top
-    pack [$MdiWin frame] -fill both -expand 1
+    pack [$MdiArea frame] -fill both -expand 1
     pack .mf.sf.label -side left -fill x -expand 1 {*}$opts
     pack .mf.sf.count_label -side right {*}$opts
     pack .mf.sf -fill x -side bottom
@@ -124,11 +124,11 @@ oo::define App method make_menu {} {
             -label "\U0001F5BB New Image" -underline 6 
     .menu.file add command -command [callback on_quit] -label "⏼ Quit" \
             -underline 2 -accelerator Ctrl+Q
-    $MdiWin new_window_menu .menu
+    $MdiArea new_window_menu .menu
 }
 
 oo::define App method make_bindings {} {
-    bind [$MdiWin frame] <<MdiTileError>> [callback on_tile_error %d]
+    bind [$MdiArea frame] <<MdiTileError>> [callback on_tile_error %d]
     bind . <Control-q> [callback on_quit]
     wm protocol . WM_DELETE_WINDOW [callback on_quit]
 }
@@ -139,7 +139,7 @@ oo::define App method on_startup {} {
     my on_new_text
     my on_new_image
     my on_new_text
-    lassign [$MdiWin size] width height
+    lassign [$MdiArea size] width height
     my on_new_text [list [expr {$width - 400}] [expr {$height - 300}] \
             400 300]
 }
@@ -156,7 +156,7 @@ oo::define App method on_new_text {{geometry {}}} {
         13 { set decorations {close} }
         15 { set decorations {minimize close} }
     }
-    set child [$MdiWin new_child $color $userdata $geometry $decorations]
+    set child [$MdiArea new_child $color $userdata $geometry $decorations]
     bind [$child frame] <<MdiChildClose>> [callback on_text_child_closed %d]
     set tk_text [text [$child body].txt -font Helvetica -wrap word]
     $tk_text tag configure color -background $color -underline 1 \
@@ -174,7 +174,7 @@ oo::define App method on_new_image {} {
     const SIZE 140
     set color [lrandom $::COLORS]
     set shape [lrandom {square rectangle circle oval}]
-    set child [$MdiWin new_child "$shape ($color)" $userdata]
+    set child [$MdiArea new_child "$shape ($color)" $userdata]
     bind [$child frame] <<MdiChildClose>> \
             [callback on_image_child_closed %d]
     set canv [canvas [$child body].canv -width $SIZE -height $SIZE]
@@ -194,23 +194,23 @@ oo::define App method on_new_image {} {
     my update_count 1
 }
 
-oo::define App method on_cascade {} { $MdiWin cascade }
+oo::define App method on_cascade {} { $MdiArea cascade }
 
-oo::define App method on_tile {} { $MdiWin tile }
+oo::define App method on_tile {} { $MdiArea tile }
 
-oo::define App method on_minimize_all {} { $MdiWin minimize_all }
+oo::define App method on_minimize_all {} { $MdiArea minimize_all }
 
-oo::define App method on_maximize_child {} { $MdiWin on_maximize_child }
+oo::define App method on_maximize_child {} { $MdiArea on_maximize_child }
 
-oo::define App method on_minimize_child {} { $MdiWin on_minimize_child }
+oo::define App method on_minimize_child {} { $MdiArea on_minimize_child }
 
-oo::define App method on_move_mode_child {} { $MdiWin on_move_mode_child }
+oo::define App method on_move_mode_child {} { $MdiArea on_move_mode_child }
 
 oo::define App method on_resize_mode_child {} {
-    $MdiWin on_resize_mode_child
+    $MdiArea on_resize_mode_child
 }
 
-oo::define App method on_close_child {} { $MdiWin on_close_child }
+oo::define App method on_close_child {} { $MdiArea on_close_child }
 
 oo::define App method on_text_child_closed child {
     puts "Could save $child ([$child userdata]) geometry=[$child geometry]:\
@@ -226,16 +226,16 @@ oo::define App method on_image_child_closed child {
 }
 
 oo::define App method on_quit {} {
-    foreach child [$MdiWin children] {
+    foreach child [$MdiArea children] {
         # TODO save the $child’s state
     }
-    $MdiWin destroy
+    $MdiArea destroy
     exit
 }
 
 oo::define App method on_tile_error message {
     .mf.sf.label configure -text "$message; cascading instead"
-    $MdiWin cascade
+    $MdiArea cascade
     after 5000 {.mf.sf.label configure -text Ready}
 }
 
