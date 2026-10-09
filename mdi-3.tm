@@ -23,27 +23,27 @@ proc mdi::Initialize {} {
     set ::mdi::Initialized 1
 }
 
-oo::class create mdi::Window {
+oo::class create mdi::Area {
     variable Frame      ;# e.g., .mainframe.mdiwindow
     variable Children   ;# list of mdi::child objects
     variable Menu
 }
 
-oo::define mdi::Window initialize {
+oo::define mdi::Area initialize {
     variable C 0
     variable Column 0
     variable X 0
     variable Y 0
 }
 
-oo::define mdi::Window constructor name {
+oo::define mdi::Area constructor name {
     if {!$::mdi::Initialized} { mdi::Initialize }
     set Frame [ttk::frame $name -style Mdi.TFrame]
     set Children [list]
     set Menu ""
 }
 
-oo::define mdi::Window destructor {
+oo::define mdi::Area destructor {
     foreach child $Children {
         if {[catch { $child on_close ; $child destroy }]} {
             my close_child $child
@@ -52,9 +52,9 @@ oo::define mdi::Window destructor {
     destroy $Frame
 }
 
-oo::define mdi::Window method frame {} { return $Frame }
+oo::define mdi::Area method frame {} { return $Frame }
 
-oo::define mdi::Window method children {} {
+oo::define mdi::Area method children {} {
     set children [list]
     foreach child $Children {
         if {[$child is_visible]} { lappend children $child }
@@ -62,7 +62,7 @@ oo::define mdi::Window method children {} {
     return $children
 }
 
-oo::define mdi::Window method hidden_children {} {
+oo::define mdi::Area method hidden_children {} {
     set children [list]
     foreach child $Children {
         if {[$child is_hidden]} { lappend children $child }
@@ -70,32 +70,34 @@ oo::define mdi::Window method hidden_children {} {
     return $children
 }
 
-oo::define mdi::Window method size {} {
+oo::define mdi::Area method all_children {} { return $Children }
+
+oo::define mdi::Area method size {} {
     list [winfo width $Frame] [winfo height $Frame]
 }
 
-oo::define mdi::Window method set_background_color color {
+oo::define mdi::Area method set_background_color color {
     ttk::style configure Mdi.TFrame -background $color -relief sunken
 }
 
-oo::define mdi::Window method set_active_child_frame_color color {
+oo::define mdi::Area method set_active_child_frame_color color {
     ttk::style configure MdiActive.TFrame -background $color -relief sunken
 }
 
-oo::define mdi::Window method set_inactive_child_frame_color color {
+oo::define mdi::Area method set_inactive_child_frame_color color {
     ttk::style configure MdiInactive.TFrame -background $color \
             -relief sunken
 }
 
-oo::define mdi::Window method set_active_child_title_color color {
+oo::define mdi::Area method set_active_child_title_color color {
     set ::mdi::TitleActiveTextColor $color
 }
 
-oo::define mdi::Window method set_inactive_child_title_color color {
+oo::define mdi::Area method set_inactive_child_title_color color {
     set ::mdi::TitleInactiveTextColor $color
 }
 
-oo::define mdi::Window method cascade {} {
+oo::define mdi::Area method cascade {} {
     set height [winfo height $Frame]
     set column 0
     set inc 0
@@ -132,7 +134,7 @@ oo::define mdi::Window method cascade {} {
     if {$active ne ""} { $active on_raise }
 }
 
-oo::define mdi::Window method tile {} {
+oo::define mdi::Area method tile {} {
     set children [my children] ;# filters out closed & hidden
     set size [llength $children]
     if {$size == 0} {
@@ -155,7 +157,7 @@ oo::define mdi::Window method tile {} {
     }
 }
 
-oo::define mdi::Window method TileMany {width height min_width min_height \
+oo::define mdi::Area method TileMany {width height min_width min_height \
         wide children size} {
     lassign [my TileGetRowsColumns $wide $size] rows columns
     set cwidth [expr {int(floor($width / ($columns * 1.0)))}]
@@ -176,7 +178,7 @@ oo::define mdi::Window method TileMany {width height min_width min_height \
     }
 }
 
-oo::define mdi::Window method TileGetRowsColumns {wide size} {
+oo::define mdi::Area method TileGetRowsColumns {wide size} {
     switch $size {
        4 - 7 - 8 - 9 - 13 - 14 - 15 - 16 - 21 - 22 - 23 - 24 - 25 - \
            31 - 32 - 33 - 34 - 35 - 36 {
@@ -241,11 +243,11 @@ oo::define mdi::Window method TileGetRowsColumns {wide size} {
     list $rows $columns
 }
 
-oo::define mdi::Window method minimize_all {} {
+oo::define mdi::Area method minimize_all {} {
     foreach child [my children] { $child on_minimize }
 }
 
-oo::define mdi::Window method active_child {} {
+oo::define mdi::Area method active_child {} {
     if {[set area [focus -lastfor $Frame]] ne ""} {
         foreach child [my children] {
             if {[string match [$child frame]* $area]} {
@@ -255,7 +257,7 @@ oo::define mdi::Window method active_child {} {
     }
 }
 
-oo::define mdi::Window method make_child_visible child {
+oo::define mdi::Area method make_child_visible child {
     set move 0
     if {[$child is_minimized]} { $child on_restore }
     lassign [$child geometry] x y width height
@@ -270,7 +272,7 @@ oo::define mdi::Window method make_child_visible child {
     $child on_raise
 }
 
-oo::define mdi::Window method new_child {{title ""} {userdata {}} \
+oo::define mdi::Area method new_child {{title ""} {userdata {}} \
         {geometry {}} {decorations {}}} {
     classvariable C
     classvariable Column
@@ -301,14 +303,14 @@ oo::define mdi::Window method new_child {{title ""} {userdata {}} \
     return $child
 }
 
-oo::define mdi::Window method close_child child {
+oo::define mdi::Area method close_child child {
     if {[set i [lsearch -exact $Children $child]] != -1} {
         catch { $child on_close }
         set Children [lremove $Children $i]
     }
 }
 
-oo::define mdi::Window method new_window_menu {parent_menu \
+oo::define mdi::Area method new_window_menu {parent_menu \
         {options {cascade tile minimize_all maximize minimize restore \
                   move resize close windows}}} {
     if {$Menu ne ""} return
@@ -380,7 +382,7 @@ oo::define mdi::Window method new_window_menu {parent_menu \
 
 # This method is for internal use but is “public” because mdi::child
 # methods need to call it.
-oo::define mdi::Window method repopulate_window_menu {} {
+oo::define mdi::Area method repopulate_window_menu {} {
     if {$Menu eq ""} return
     $Menu.windows delete 0 end
     set accels [lreverse [split 123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ ""]]
@@ -396,27 +398,27 @@ oo::define mdi::Window method repopulate_window_menu {} {
     }
 }
 
-oo::define mdi::Window method on_maximize_child {} {
+oo::define mdi::Area method on_maximize_child {} {
     if {[set child [my active_child]] ne ""} { $child on_maximize }
 }
 
-oo::define mdi::Window method on_minimize_child {} {
+oo::define mdi::Area method on_minimize_child {} {
     if {[set child [my active_child]] ne ""} { $child on_minimize }
 }
 
-oo::define mdi::Window method on_restore_child {} {
+oo::define mdi::Area method on_restore_child {} {
     if {[set child [my active_child]] ne ""} { $child on_restore }
 }
 
-oo::define mdi::Window method on_move_mode_child {} {
+oo::define mdi::Area method on_move_mode_child {} {
     if {[set child [my active_child]] ne ""} { $child on_move_mode }
 }
 
-oo::define mdi::Window method on_resize_mode_child {} {
+oo::define mdi::Area method on_resize_mode_child {} {
     if {[set child [my active_child]] ne ""} { $child on_resize_mode }
 }
 
-oo::define mdi::Window method on_close_child {} {
+oo::define mdi::Area method on_close_child {} {
     if {[set child [my active_child]] ne ""} { $child on_close_if_closable }
 }
 
@@ -439,7 +441,7 @@ oo::class create mdi::child {
     variable UserData ;# e.g., to help with saving/loading window content
 }
 
-# parent: the mdi::Window to which this belongs
+# parent: the mdi::Area to which this belongs
 # name: the name of the window, e.g., .mainframe.mdiwindow
 # decorations: minimize and/or maximize and/or close buttons; if close
 #   button is present the window is closable

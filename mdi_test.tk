@@ -8,7 +8,7 @@ if {![catch {file readlink [info script]} name]} {
 }
 tcl::tm::path add $APPPATH
 
-package require mdi 2
+package require mdi 3
 
 const COLORS [split [string trim [readFile $::APPPATH/rgb.txt]] \n]
 
@@ -83,7 +83,7 @@ oo::define App method make_widgets {} {
             -style Toolbutton -command [callback on_tile]
     ttk::button .mf.tb.minimize_all -text "\U0001F5D5" -takefocus 0 \
             -style Toolbutton -command [callback on_minimize_all]
-    set MdiArea [mdi::Window new .mf.mdi]
+    set MdiArea [mdi::Area new .mf.mdi]
     if {$Debug} {
         $MdiArea set_background_color #FFFFE0
         $MdiArea set_active_child_frame_color blue
