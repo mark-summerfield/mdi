@@ -109,7 +109,7 @@ oo::define mdi::Area method cascade {} {
             if {!$inc} {
                 set inc [expr {int(round(11 * [tk scaling])) + \
                         [font metrics TkDefaultFont \
-                        -displayof [$child frame].top -linespace]}]
+                            -displayof [$child frame].top -linespace]}]
             }
             $child on_restore
             set window [$child frame]
@@ -250,9 +250,7 @@ oo::define mdi::Area method minimize_all {} {
 oo::define mdi::Area method active_child {} {
     if {[set area [focus -lastfor $Frame]] ne ""} {
         foreach child [my children] {
-            if {[string match [$child frame]* $area]} {
-                return $child
-            }
+            if {[string match [$child frame]* $area]} { return $child }
         }
     }
 }
@@ -287,7 +285,7 @@ oo::define mdi::Area method new_child {{title ""} {userdata {}} \
         set height [expr {100 * [tk scaling]}]
         set inc [expr {int(round(11 * [tk scaling])) + \
                 [font metrics TkDefaultFont -displayof [$child frame].top \
-                -linespace]}]
+                    -linespace]}]
         if {$Y + (0.5 * $height) > $win_height} {
             set X [expr {int(round([incr Column] * 0.5 * $width))}]
             set Y 0
@@ -501,14 +499,14 @@ oo::define mdi::child method MakeLayout {} {
     set column 2
     foreach decoration $Decorations {
         if {$decoration eq "maximize"} {
-            grid $Frame.top.maximize -row 0 -column $column \
-                    -sticky e {*}$opts
+            grid $Frame.top.maximize -row 0 -column $column -sticky e \
+                    {*}$opts
         } elseif {$decoration eq "minimize"} {
-            grid $Frame.top.minimize -row 0 -column $column \
-                    -sticky e {*}$opts
+            grid $Frame.top.minimize -row 0 -column $column -sticky e \
+                    {*}$opts
         } elseif {$decoration eq "close"} {
-            grid $Frame.top.close -row 0 -column $column \
-                    -sticky e {*}$opts
+            grid $Frame.top.close -row 0 -column $column -sticky e \
+                    {*}$opts
         }
         grid columnconfigure $Frame.top $column -minsize $width
         incr column
@@ -693,7 +691,7 @@ oo::define mdi::child method on_up_arrow {} {
         set height [lindex [place configure $Frame -height] end]
         set min_height [lindex [my min_size] 1]
         place configure $Frame \
-            -height [expr {max($min_height, $height - 5)}] 
+                -height [expr {max($min_height, $height - 5)}] 
     }
 }
 
