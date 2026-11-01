@@ -50,8 +50,8 @@ oo::define App constructor {theme debug} {
 oo::define App method show {} {
     wm deiconify .
     raise .
-    update
-    after idle [callback on_startup]
+    update idletasks
+    my on_startup
 }
 
 oo::define App method make_ui {} {
