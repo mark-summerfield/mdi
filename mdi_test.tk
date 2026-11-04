@@ -122,6 +122,8 @@ oo::define App method make_menu {} {
             -label "\U0001F5B9 New Text" -underline 6 
     .menu.file add command -command [callback on_new_image] \
             -label "\U0001F5BB New Image" -underline 6 
+    .menu.file add command -command [callback on_close_all] \
+            -label "X Close All" -underline 2
     .menu.file add command -command [callback on_quit] -label "⏼ Quit" \
             -underline 2 -accelerator Ctrl+Q
     $MdiArea new_window_menu .menu
@@ -193,6 +195,8 @@ oo::define App method on_new_image {} {
     $child on_raise
     my update_count 1
 }
+
+oo::define App method on_close_all {} { $MdiArea close_all }
 
 oo::define App method on_cascade {} { $MdiArea cascade }
 

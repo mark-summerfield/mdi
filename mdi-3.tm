@@ -247,6 +247,11 @@ oo::define mdi::Area method minimize_all {} {
     foreach child [my children] { $child on_minimize }
 }
 
+oo::define mdi::Area method close_all {} {
+    foreach child $Children { catch { $child on_close } }
+    set Children [list]
+}
+
 oo::define mdi::Area method active_child {} {
     if {[set area [focus -lastfor $Frame]] ne ""} {
         foreach child [my children] {
