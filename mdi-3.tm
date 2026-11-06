@@ -44,12 +44,16 @@ oo::define mdi::Area constructor name {
 }
 
 oo::define mdi::Area destructor {
+    my destroy_children
+    destroy $Frame
+}
+
+oo::define mdi::Area method destroy_children {} {
     foreach child $Children {
         if {[catch { $child on_close ; $child destroy }]} {
             my close_child $child
         }
     }
-    destroy $Frame
 }
 
 oo::define mdi::Area method frame {} { return $Frame }
@@ -245,11 +249,6 @@ oo::define mdi::Area method TileGetRowsColumns {wide size} {
 
 oo::define mdi::Area method minimize_all {} {
     foreach child [my children] { $child on_minimize }
-}
-
-oo::define mdi::Area method close_all {} {
-    foreach child $Children { catch { $child on_close } }
-    set Children [list]
 }
 
 oo::define mdi::Area method active_child {} {
