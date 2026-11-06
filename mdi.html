@@ -474,8 +474,8 @@ is to bind to its <code>&lt;&lt;MdiChildClose&gt;&gt;</code> event
 <i>(see below)</i>.
 </p>
 
-<h4><code>$child body</code></h4>
-This method returns the <code>mdi::child</code>’s “body”
+<h4><code>$child content</code></h4>
+This method returns the <code>mdi::child</code>’s content
 <code>ttk::frame</code>. Use this to populate the child window with your
 own widgets. For example:
 </p>
@@ -483,7 +483,7 @@ own widgets. For example:
 <pre><code>
 set child [$MdiArea new_child $title $geometry $closable]
 bind [$child frame] &lt;&lt;MdiChildClose&gt;&gt; [callback on_child_closed %d]
-set tk_text [text [$child body].txt -font Helvetica -wrap word]
+set tk_text [text [$child content].txt -font Helvetica -wrap word]
 pack $tk_text -fill both -expand 1
 </code></pre>
 
@@ -492,8 +492,8 @@ Here, a new <code>mdi::child</code> window is created, its
 <code>&lt;&lt;MdiChildClose&gt;&gt;</code> event is bound so that we can
 save its state when it is closed (see the <a
 href="#new_child">mdi::Area new_child</a> method), and we populate its
-body with a <code>text</code> widget. Naturally, we could populate the
-body with any number of widgets including scrollbars etc.
+content with a <code>text</code> widget. Naturally, we could populate the
+content with any number of widgets including scrollbars etc.
 </p>
 
 <h4>

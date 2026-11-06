@@ -427,7 +427,7 @@ oo::define mdi::Area method on_close_child {} {
 # $Frame             ttk::frame for child window
 # $Frame.top         ttk::frame for child window's title & buttons
 # $Frame.top.label   ttk::label for child window's title label
-# $Frame.body        ttk::frame for the user to populate
+# $Frame.content     ttk::frame for the user to populate
 oo::class create mdi::child {
     variable Parent
     variable Frame
@@ -491,7 +491,7 @@ oo::define mdi::child method MakeWidgets {} {
         ttk::button $Frame.top.close -style Toolbutton -text × \
                 -command [callback on_close]
     }
-    ttk::frame $Frame.body
+    ttk::frame $Frame.content
 }
 
 oo::define mdi::child method MakeLayout {} {
@@ -516,7 +516,7 @@ oo::define mdi::child method MakeLayout {} {
         incr column
     }
     grid columnconfigure $Frame.top 1 -weight 1
-    pack $Frame.body -fill both -expand 1 {*}$opts
+    pack $Frame.content -fill both -expand 1 {*}$opts
     pack $Frame -fill both -expand 1 -side bottom
 }
 
@@ -566,7 +566,7 @@ oo::define mdi::child destructor {
 }
 
 oo::define mdi::child method frame {} { return $Frame }
-oo::define mdi::child method body {} { return $Frame.body }
+oo::define mdi::child method content {} { return $Frame.content }
 
 oo::define mdi::child method title {} { $Frame.top.label cget -text }
 oo::define mdi::child method set_title title {

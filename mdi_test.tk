@@ -160,7 +160,7 @@ oo::define App method on_new_text {{geometry {}}} {
     }
     set child [$MdiArea new_child $color $userdata $geometry $decorations]
     bind [$child frame] <<MdiChildClose>> [callback on_text_child_closed %d]
-    set tk_text [text [$child body].txt -font Helvetica -wrap word]
+    set tk_text [text [$child content].txt -font Helvetica -wrap word]
     $tk_text tag configure color -background $color -underline 1 \
             -underlinefg $color
     $tk_text insert end "The randomly chosen color is $color "
@@ -179,7 +179,7 @@ oo::define App method on_new_image {} {
     set child [$MdiArea new_child "$shape ($color)" $userdata]
     bind [$child frame] <<MdiChildClose>> \
             [callback on_image_child_closed %d]
-    set canv [canvas [$child body].canv -width $SIZE -height $SIZE]
+    set canv [canvas [$child content].canv -width $SIZE -height $SIZE]
     switch $shape {
         square { $canv create rectangle 10 10 $SIZE $SIZE -fill $color}
         rectangle {
@@ -218,7 +218,7 @@ oo::define App method on_close_child {} { $MdiArea on_close_child }
 
 oo::define App method on_text_child_closed child {
     puts "Could save $child ([$child userdata]) geometry=[$child geometry]:\
-            [string trim [[$child body].txt get 1.0 end]]"
+            [string trim [[$child content].txt get 1.0 end]]"
     $child destroy
     my update_count -1
 }
